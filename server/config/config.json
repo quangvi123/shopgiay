@@ -1,0 +1,9 @@
+{
+    "default": {
+      "username": "root",
+      "password": "0332691596vi",
+      "database": "nikeshop",
+      "host": "127.0.0.1",
+      "dialect": "mysql"
+    }
+  }
