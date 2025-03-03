@@ -1,96 +1,92 @@
-const { Cart, Product } = require("../models")
+const { Cart, Product, User } = require("../models");
 
-const createCart = async (data) => {
-    try {
-      const existingCart = await Cart.findOne({
-        where: {
-          userId: data.userId,
-          productId: data.productId
+async function getAllCarts(userId) {
+  try {
+    return await Cart.findAll({
+      where: { userId },
+      include: [
+        {
+          model: Product,
+          as: "product",
+          attributes: ["id", "name", "price", "image"], // Thêm image1 vào để lấy ảnh sản phẩm
         },
-      });
-  
-      if (existingCart) {
-        existingCart.quantity += data.quantity; 
-        await existingCart.save(); // Lưu thay đổi
-        return existingCart; 
-      } else {
-        const cart = await Cart.create(data);
-        return cart;
-      }
-    } catch (error) {
-      console.error("Error creating cart:", error);
-      throw error;
-    }
-  };
-
-const getAllCarts = async (userId) => {
-    try {
-      const carts = await Cart.findAll({
-        where: { userId },
-        include: {
-          model: Product,         // Chỉ định mô hình Product
-          as: 'product',   // Đặt alias cho mối quan hệ
-          required: true,          // Inner join để chỉ lấy Cart có Product
-          attributes: ['id', 'name', 'price', 'image1'],  // Chọn các trường từ bảng Product
-        }
-      });
-      
-              return carts;
-    } catch (error) {
-        console.error("Error creating cart:", error);
-        throw error;
-    }
+      ],
+    });
+  } catch (error) {
+    throw new Error("Lỗi khi lấy giỏ hàng: " + error.message);
+  }
 }
 
-const getCart = async (productId, userId) => {
-    
-    try {
-      const cart = await Cart.findOne({
-        where: {
-          userId,
-          productId,
-        },
-        include: [
-          {
-            model: Product,
-            as: 'product',// Lấy thông tin sản phẩm
-          }
-        ],
-      });
-  
-      return cart;
-    } catch (error) {
-      console.error("Error fetching cart:", error);
-      throw error;
-    }
-  };
+async function createCart({ userId, productId, quantity }) {
+  try {
+    const product = await Product.findByPk(productId);
+    if (!product) throw new Error("Sản phẩm không tồn tại");
 
-const updateCart = async (id,quantity) => {
-    try {
-        const updateCart = await Cart.update(
-            { quantity }, // Giá trị cần cập nhật
-            { where: { id } } // Điều kiện
-          );        
-          return updateCart;
-    } catch (error) {
-        console.error("Error update cart:", error);
-      throw error;
-    }
+    const user = await User.findByPk(userId);
+    if (!user) throw new Error("Người dùng không tồn tại");
+
+    const cart = await Cart.create({
+      userId,
+      productId,
+      quantity,
+    });
+    return cart;
+  } catch (error) {
+    throw new Error("Lỗi khi tạo giỏ hàng: " + error.message);
+  }
 }
-const deleteCart = async (id) => {
-    try {
-        const deleteCart = await Cart.destroy({where: {id}})
-        return deleteCart;
-    } catch (error) {
-        console.error("Error update cart:", error);
-        throw error;
-    }
+
+async function getCartDetail(id) {
+  try {
+    const cart = await Cart.findByPk(id, {
+      include: [
+        {
+          model: Product,
+          as: "product",
+          attributes: ["id", "name", "price", "image"], // Thêm image1 vào
+        },
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+      ],
+    });
+    return cart;
+  } catch (error) {
+    throw new Error("Lỗi khi lấy chi tiết giỏ hàng: " + error.message);
+  }
+}
+
+async function deleteCart(id) {
+  try {
+    const cart = await Cart.findByPk(id);
+    if (!cart) throw new Error("Giỏ hàng không tồn tại");
+
+    await cart.destroy();
+    return true;
+  } catch (error) {
+    throw new Error("Lỗi khi xóa giỏ hàng: " + error.message);
+  }
+}
+
+async function updateCart({ id, quantity }) {
+  try {
+    const cart = await Cart.findByPk(id);
+    if (!cart) throw new Error("Giỏ hàng không tồn tại");
+
+    cart.quantity = quantity;
+    await cart.save();
+    return cart;
+  } catch (error) {
+    throw new Error("Lỗi khi cập nhật giỏ hàng: " + error.message);
+  }
 }
 
 module.exports = {
-    createCart,
-    getAllCarts,
-    getCart,
-    updateCart,
-    deleteCart,
-}
+  getAllCarts,
+  createCart,
+  getCartDetail,
+  deleteCart,
+  updateCart,
+};

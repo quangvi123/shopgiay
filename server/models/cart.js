@@ -10,37 +10,42 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "products", // Tên bảng trong cơ sở dữ liệu (viết thường)
-          key: "id", // Khóa chính của bảng Product
+          model: "products", // Name of the products table
+          key: "id", // Primary key of the products table
         },
       },
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "users", // Tên bảng trong cơ sở dữ liệu cho User
-          key: "id", // Khóa chính của bảng User
+          model: "users", // Name of the users table
+          key: "id", // Primary key of the users table
         },
+      },
+      image: { // New image field
+        type: DataTypes.STRING,
+        allowNull: true, // This can be null if you don't always want to store an image URL
       },
     },
     {
-      timestamps: true, // Tự động tạo createdAt và updatedAt
+      timestamps: true, // Automatically create createdAt and updatedAt fields
     }
   );
 
-  // Định nghĩa các mối quan hệ giữa Cart và các model khác
+  // Define relationships between Cart and other models
   Cart.associate = (models) => {
-    // Mối quan hệ với Product
+    // Relationship with Product
     Cart.belongsTo(models.Product, {
       foreignKey: "productId",
-      as: "product", // Tên alias cho mối quan hệ
+      as: "product", // Alias for the relationship
     });
 
-    // Mối quan hệ với User
+    // Relationship with User
     Cart.belongsTo(models.User, {
       foreignKey: "userId",
-      as: "user", // Tên alias cho mối quan hệ
+      as: "user", // Alias for the relationship
     });
   };
+
   return Cart;
 };
